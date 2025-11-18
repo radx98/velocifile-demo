@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Check = {
   id: string;
+  type: string;
   name: string;
   description: string;
   prompt: string;
@@ -54,6 +55,16 @@ export function PrecheckApp({ checks }: Props) {
   const [todoItems, setTodoItems] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const checksByType = useMemo(() => {
+    return checks.reduce<Record<string, Check[]>>((acc, check) => {
+      const typeKey = check.type?.trim() || "Other";
+      if (!acc[typeKey]) {
+        acc[typeKey] = [];
+      }
+      acc[typeKey].push(check);
+      return acc;
+    }, {});
+  }, [checks]);
 
   useEffect(() => {
     setCheckStates(initialCheckState);
@@ -254,8 +265,8 @@ export function PrecheckApp({ checks }: Props) {
   return (
     <div className="w-full max-w-4xl">
       <header className="mb-10 space-y-1">
-        <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
-          New-Jersey
+        <p className="text-sm uppercase text-neutral-500">
+          New Jersey
         </p>
         <h1 className="text-3xl font-semibold text-neutral-900">
           SERFF Compliance Pre-Check
@@ -295,11 +306,11 @@ export function PrecheckApp({ checks }: Props) {
         </div>
 
         {!!files.length && (
-          <ul className="space-y-2">
+          <ul className="flex flex-wrap gap-2">
             {files.map(({ id, file }) => (
               <li
                 key={id}
-                className="flex items-center justify-between rounded-sm border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700"
+                className="flex items-center justify-between rounded-sm border border-neutral-200 bg-white px-4 py-1 text-xs text-neutral-700"
               >
                 <span className="truncate" title={file.name}>
                   {file.name}
@@ -336,55 +347,64 @@ export function PrecheckApp({ checks }: Props) {
         </div>
       )}
 
-      <section className="space-y-4">
-        <h3 className="text-xl font-semibold text-neutral-900">Checklist</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {checks.map((check) => {
-            const currentState = checkStates[check.id] || {
-              status: "idle",
-              summary: "",
-            };
-            return (
-              <article
-                key={check.id}
-                className="rounded-sm border border-neutral-200 bg-white p-4"
-              >
-                <div className="mb-1 flex items-center gap-2">
-                  <h4 className="text-lg font-medium text-neutral-900">
-                    {check.name}
-                  </h4>
-                  {renderIndicator(currentState.status)}
-                </div>
-                <p className="text-sm text-neutral-600">{check.description}</p>
-                {currentState.summary && (
-                  <p
-                    className={`mt-3 text-sm ${
-                      currentState.status === "pass"
-                        ? "text-lime-800"
-                        : currentState.status === "fail"
-                          ? "text-red-800"
-                          : "text-amber-800"
-                    }`}
-                  >
-                    {currentState.summary}
-                  </p>
-                )}
-              </article>
-            );
-          })}
+      <section className="space-y-6">
+        <h2 className="text-2xl font-semibold text-neutral-900">Checklist</h2>
+        <div className="space-y-6">
+          {Object.entries(checksByType).map(([type, groupedChecks]) => (
+            <div key={type} className="space-y-4">
+              <h3 className="text-xl font-semibold text-neutral-900">{type}</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                {groupedChecks.map((check) => {
+                  const currentState = checkStates[check.id] || {
+                    status: "idle",
+                    summary: "",
+                  };
+                  return (
+                    <article
+                      key={check.id}
+                      className="rounded-sm border border-neutral-200 bg-white p-4"
+                    >
+                      <div className="mb-1 flex items-center gap-2">
+                        <h4 className="text-lg font-medium text-neutral-900">
+                          {check.name}
+                        </h4>
+                        {renderIndicator(currentState.status)}
+                      </div>
+                      <p className="text-sm text-neutral-600">
+                        {check.description}
+                      </p>
+                      {currentState.summary && (
+                        <p
+                          className={`mt-3 text-sm ${
+                            currentState.status === "pass"
+                              ? "text-lime-800"
+                              : currentState.status === "fail"
+                                ? "text-red-800"
+                                : "text-amber-800"
+                          }`}
+                        >
+                          {currentState.summary}
+                        </p>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
       {summaryText && (
         <section className="mt-10 space-y-2 rounded-sm border border-neutral-200 bg-white p-4">
-          <h3 className="text-xl font-semibold text-neutral-900">Summary</h3>
+          <h2 className="text-2xl font-semibold text-neutral-900">Summary</h2>
           <p className="text-sm text-neutral-700">{summaryText}</p>
         </section>
       )}
 
       {todoItems.length > 0 && (
         <section className="mt-6 space-y-3 rounded-sm border border-neutral-200 bg-white p-4">
-          <h3 className="text-xl font-semibold text-neutral-900">To-Do</h3>
+          <h2 className="text-2xl font-semibold text-neutral-900">To-Do</h2>
           <ul className="list-disc space-y-1 pl-5 text-sm text-neutral-700">
             {todoItems.map((item, index) => (
               <li key={`${item}-${index}`}>{item}</li>

@@ -22,12 +22,20 @@ type IncomingFile = {
 
 type IncomingCheck = {
   id: string;
+  type?: string;
   name: string;
   description: string;
   prompt: string;
 };
 
-const buildUserMessage = (checks: IncomingCheck[], files: IncomingFile[]) => {
+type SanitizedCheck = {
+  id: string;
+  name: string;
+  description: string;
+  prompt: string;
+};
+
+const buildUserMessage = (checks: SanitizedCheck[], files: IncomingFile[]) => {
   const checksBlock = JSON.stringify(checks, null, 2);
   const filesBlock = files
     .map((file) => {
@@ -104,7 +112,14 @@ export async function POST(request: Request) {
     });
   }
 
-  const userMessage = buildUserMessage(checks, files);
+  const sanitizedChecks: SanitizedCheck[] = checks.map((check) => ({
+    id: check.id,
+    name: check.name,
+    description: check.description,
+    prompt: check.prompt,
+  }));
+
+  const userMessage = buildUserMessage(sanitizedChecks, files);
 
   const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

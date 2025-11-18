@@ -13,7 +13,7 @@
 
 Display two text elements:
 - Title: "SERFF Compliance Pre-Check"
-- Subtitle: "New-Jersey"
+- Subtitle: "New Jersey"
 
 ### Upload Field
 
